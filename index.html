@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentinu - Grok's Doggo | New Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --background-color: #10111a; /* Dark Blue/Black */
+            --grid-color: rgba(173, 216, 230, 0.1); /* Light Blue Grid */
+            --surface-color: #1a1b2a; /* Slightly lighter dark blue */
+            --primary-text-color: #e0e0ff; /* Light Lavender/White */
+            --secondary-text-color: #a9b2d3; /* Muted Blue/Grey */
+            --accent-color: #e53170; /* Vibrant Pink/Magenta */
+            --accent-glow: rgba(229, 49, 112, 0.4); /* Pink Glow */
+            --glitch-color-1: #e53170; /* Pink for glitch */
+            --glitch-color-2: #00ffff; /* Cyan for glitch */
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--primary-text-color);
+            line-height: 1.7;
+            overflow-x: hidden;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-crosshair"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg>') 12 12, auto;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: moveGrid 10s linear infinite;
+        }
+        @keyframes moveGrid { from { background-position: 0 0; } to { background-position: 40px 40px; } }
+        
+        .particle {
+            position: fixed; background-color: var(--accent-color); border-radius: 50%; pointer-events: none; z-index: 9999; width: 8px; height: 8px; box-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color); animation: particle-fade 1s forwards;
+        }
+        @keyframes particle-fade { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0); } }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .container { max-width: 960px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 2; }
+        .main-header { padding: 25px 0; position: fixed; width: 100%; top: 0; z-index: 10; background: rgba(16, 17, 26, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--surface-color); }
+        .main-header .container { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-weight: 700; font-size: 1.5rem; color: var(--primary-text-color); text-decoration: none; text-shadow: 0 0 5px var(--accent-glow); display: flex; align-items: center; }
+        .logo img { height: 40px; margin-right: 10px; filter: drop-shadow(0 0 10px var(--accent-color)); }
+        .logo span { color: var(--accent-color); }
+        .main-nav { display: flex; align-items: center; gap: 15px; }
+        .main-nav ul { list-style: none; display: flex; gap: 15px; }
+        .main-nav a { color: var(--secondary-text-color); text-decoration: none; font-weight: 600; transition: color 0.3s ease, text-shadow 0.3s ease; padding: 5px 10px; }
+        .main-nav a:hover { color: var(--accent-color); text-shadow: 0 0 15px var(--accent-color); }
+        .x-button {
+            display: inline-flex; align-items: center; gap: 5px; background: #000; color: #fff; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-weight: 700; transition: background 0.3s ease, transform 0.3s ease; border: 2px solid var(--accent-color); box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); 
+        }
+        .x-button svg { width: 18px; height: 18px; fill: currentColor; }
+        .x-button:hover { background: #333; transform: scale(1.05); box-shadow: 0 0 15px var(--accent-glow); }
+
+        .hero { position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+        
+        #threejs-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .hero-content { position: relative; z-index: 2; }
+        
+        .glitch-wrapper { position: relative; display: inline-block; }
+        .hero h1 { font-size: 3.5rem; font-weight: 700; line-height: 1.2; color: var(--primary-text-color); position: relative; cursor: pointer; }
+        .glitch-wrapper:hover h1 { animation: glitch-animation 0.4s infinite; }
+        .hero h1::before, .hero h1::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; opacity: 0; }
+        .hero h1::before { left: 2px; text-shadow: -2px 0 var(--glitch-color-1); animation: glitch-before 2s infinite linear alternate-reverse; }
+        .hero h1::after { left: -2px; text-shadow: -2px 0 var(--glitch-color-2), 2px 2px var(--glitch-color-1); animation: glitch-after 2s infinite linear alternate-reverse; }
+        @keyframes glitch-before { 0% { clip-path: inset(89% 0 1% 0); opacity: 1; } 100% { clip-path: inset(43% 0 25% 0); opacity: 1; } }
+        @keyframes glitch-after { 0% { clip-path: inset(79% 0 19% 0); opacity: 1; } 100% { clip-path: inset(10% 0 81% 0); opacity: 1; } }
+        @keyframes glitch-animation { 0% { transform: translate(0); } 20% { transform: translate(-3px, 3px); } 40% { transform: translate(-3px, -3px); } 60% { transform: translate(3px, 3px); } 80% { transform: translate(3px, -3px); } 100% { transform: translate(0); } }
+
+        .hero .subtitle { font-size: 1.5rem; color: var(--accent-color); margin: 20px 0 40px 0; text-shadow: 0 0 10px var(--accent-glow); }
+        
+        .cta-button { display: inline-block; background: var(--accent-color); color: var(--background-color); padding: 15px 35px; border-radius: 50px; text-decoration: none; font-weight: 700; position: relative; overflow: hidden; border: 2px solid var(--accent-color); transition: transform 0.3s ease, box-shadow 0.3s ease; animation: pulse 2s infinite; }
+        .cta-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent); transition: left 0.6s ease; }
+        .cta-button:hover::before { left: 100%; }
+        .cta-button:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 0 35px var(--accent-glow); animation-play-state: paused; }
+        @keyframes pulse { 0% { box-shadow: 0 0 15px var(--accent-glow); } 50% { box-shadow: 0 0 30px var(--accent-glow); } 100% { box-shadow: 0 0 15px var(--accent-glow); } }
+
+        .content-section { padding: 80px 20px; background: var(--surface-color); margin-bottom: 2rem; border-radius: 15px; opacity: 0; transform: translateY(50px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
+        .content-section.is-visible { opacity: 1; transform: translateY(0); }
+        .content-section h2 { font-size: 2.5rem; color: var(--accent-color); margin-bottom: 35px; text-align: center; }
+        
+        .about-me-layout { display: flex; align-items: center; gap: 40px; flex-wrap: wrap; justify-content: center; }
+        .about-me-text { flex: 1; min-width: 300px; }
+        .about-me-text strong { color: var(--primary-text-color); }
+        
+        .photo-container { position: relative; width: 250px; height: 250px; border-radius: 50%; border: 3px solid var(--accent-color); box-shadow: 0 0 25px var(--accent-glow); overflow: hidden; cursor: pointer; display: flex; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5); }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; transition: none; }
+        .photo-container:hover img { filter: none; }
+        
+        .photo-container::before, .photo-container::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('logo.jpg'); 
+            background-size: cover; 
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: none; 
+            opacity: 0;
+        }
+        .photo-container:hover::before { animation: photo-glitch 0.4s infinite; }
+        .photo-container:hover::after { animation: photo-glitch 0.4s infinite reverse; }
+        
+        @keyframes photo-glitch {
+            0% { transform: translate(0); clip-path: inset(89% 0 1% 0); opacity: 1; }
+            20% { transform: translate(-5px, 2px); clip-path: inset(23% 0 50% 0); opacity: 1; }
+            60% { transform: translate(5px, -2px); clip-path: inset(60% 0 10% 0); opacity: 1; }
+            100% { transform: translate(0); clip-path: inset(89% 0 1% 0); opacity: 1; }
+        }
+
+        .skills-list { list-style: none; padding: 0; text-align: center; }
+        .skills-list li { display: inline-block; background: var(--background-color); padding: 10px 20px; margin: 5px; border-radius: 25px; border: 1px solid var(--accent-color); font-weight: 600; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .skills-list li:hover { transform: translateY(-3px); box-shadow: 0 8px 15px var(--accent-glow); }
+
+        .main-footer { padding: 40px 0; text-align: center; color: #888; font-size: 0.9rem; }
+        @media (max-width: 768px) { 
+            .hero h1 { font-size: 2.5rem; } 
+            .hero .subtitle { font-size: 1.2rem; } 
+            .content-section h2 { font-size: 2rem; } 
+            .main-header .container { flex-direction: column; gap: 15px; } 
+            .main-nav { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <a href="#hero" class="logo">
+                <img src="logo.jpg" alt="Valentinu - Grok's Doggo Logo">
+                Valentinu<span>.</span>
+            </a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#agent-dossier">Agent Dossier</a></li>
+                    <li><a href="#mission-parameters">Mission Parameters</a></li>
+                    <li><a href="#operational-roadmap">Operational Roadmap</a></li>
+                </ul>
+                <a href="https://x.com/b1tcoiner_vibes/status/1945778707769016514" target="_blank" class="x-button">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="r-1nao33p r-4qtqp9 r-yyyyoo r-lwhw9o r-dnmrzs r-bnwqim r-1plcrui r-lrvibr" style="fill: currentColor;"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.75 11.392H20.06L14.956 9.771 21.6 2.25h-2.28zm-2.457 16.16l-4.794-6.242-3.308-4.3H2.25l7.228 8.26-8.75 11.392h2.808l5.106-6.66l3.308 4.3h8.26l-7.227-8.26z"></path></g></svg>
+                    Latest Intel on X
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="hero">
+            <div id="threejs-container"></div>
+            <div class="hero-content">
+                <div class="glitch-wrapper">
+                    <h1 data-text="Valentinu - Grok's Doggo.">The Name's Doggo. Valentinu - Grok's Doggo.</h1>
+                </div>
+                <p class="subtitle">Infiltrating the Blockchain. Launching on Raydium.</p>
+                <a href="https://raydium.io/swap/" target="_blank" class="cta-button">Buy on Raydium</a>
+            </div>
+        </section>
+
+        <div class="container">
+            <section id="agent-dossier" class="content-section">
+                <h2>Agent Dossier: Valentinu - Grok's Doggo</h2>
+                <div class="about-me-layout">
+                    <div class="photo-container">
+                        <img src="logo.jpg" alt="Valentinu - Grok's Doggo">
+                    </div>
+                    <div class="about-me-text">
+                        <p>
+                            Meet Agent Doggo, the most elite operative in the crypto world, dispatched by the enigmatic **Valentinu agent**. This isn't just another memecoin; it's a **covert operation for market dominance.** Our agent is sleek, silent, and programmed for one thing: mission success.
+                        </p>
+                        <p>
+                            Operating on the **Solana** network for lightning-fast maneuvers, Agent Doggo is here to disrupt the status quo. There's no bulky whitepaper, only a classified mission brief. Your objective: join the agency and secure the assets. This is not financial advice; it's a recruitment drive.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="mission-parameters" class="content-section">
+                <h2>Mission Parameters (Tokenomics)</h2>
+                <ul class="skills-list">
+                    <li>Total Supply: 1 Billion (Classified)</li>
+                    <li>Taxes: 0/0 (Agents leave no trace)</li>
+                    <li>Liquidity: LP Burnt (Evidence destroyed)</li>
+                    <li>Ownership: Renounced (Agent is autonomous)</li>
+                    <li>Blockchain: Solana (For rapid deployment)</li>
+                    <li>Contract Address: <code style="user-select: all; font-weight: normal; background: #333; padding: 2px 6px; border-radius: 4px;">[Your Contract Address Here]</code></li>
+                </ul>
+                <p style="text-align:center; margin-top: 30px;">
+                    Your briefing is complete. Proceed with the acquisition.
+                </p>
+            </section>
+            
+            <section id="operational-roadmap" class="content-section">
+                <h2>Operational Roadmap</h2>
+                <p style="text-align:center; max-width: 600px; margin: 0 auto 30px auto;">
+                    Every successful operation follows a strict protocol. This is our path to total market infiltration.
+                </p>
+                <ul class="skills-list">
+                    <li>Phase 1: Infiltration (Stealth Launch on Raydium)</li>
+                    <li>Phase 2: Intelligence Gathering (Community Growth & Raids)</li>
+                    <li>Phase 3: Asset Acquisition (Listings & Partnerships)</li>
+                    <li>Phase 4: Global Network (Total Market Dominance)</li>
+                </ul>
+                <p style="text-align:center; margin-top: 30px;">
+                    The mission is live. Agents, you have your orders.
+                </p>
+            </section>
+        </div>
+    </main>
+    <footer class="main-footer">
+        <p>&copy; 2025 Valentinu - Grok's Doggo. Mission Complete.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('mousemove', e => {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            document.body.appendChild(particle);
+            const particleSize = 8;
+            particle.style.left = (e.clientX - particleSize / 2) + 'px';
+            particle.style.top = (e.clientY - particleSize / 2) + 'px';
+            setTimeout(() => { particle.remove(); }, 1000);
+        });
+
+        const sections = document.querySelectorAll('.content-section');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        sections.forEach(section => { observer.observe(section); });
+
+        const container = document.getElementById('threejs-container');
+        let scene, camera, renderer, logos = [];
+        const logoCount = 100; 
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 10;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const loader = new THREE.TextureLoader();
+            loader.load('logo.jpg', function(texture) {
+                const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide, opacity: 0.7 });
+
+                for (let i = 0; i < logoCount; i++) {
+                    const size = Math.random() * 0.8 + 0.3; 
+                    const geometry = new THREE.PlaneGeometry(size, size);
+                    const logoMesh = new THREE.Mesh(geometry, material);
+
+                    logoMesh.position.x = (Math.random() - 0.5) * 30;
+                    logoMesh.position.y = (Math.random() - 0.5) * 30;
+                    logoMesh.position.z = (Math.random() - 0.5) * 30;
+
+                    logoMesh.rotation.x = Math.random() * Math.PI * 2;
+                    logoMesh.rotation.y = Math.random() * Math.PI * 2;
+                    logoMesh.rotation.z = Math.random() * Math.PI * 2;
+
+                    logoMesh.userData.rotationSpeedX = (Math.random() - 0.5) * 0.02;
+                    logoMesh.userData.rotationSpeedY = (Math.random() - 0.5) * 0.02;
+                    logoMesh.userData.rotationSpeedZ = (Math.random() - 0.5) * 0.02;
+
+                    scene.add(logoMesh);
+                    logos.push(logoMesh);
+                }
+            });
+
+            const ambientLight = new THREE.AmbientLight(0x8a9af1, 0.7); // Light purple/blue ambient
+            scene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0xe53170, 1, 50); // Pink point light
+            pointLight1.position.set(10, 10, 10);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0x00ffff, 1, 50); // Cyan point light
+            pointLight2.position.set(-10, -10, -10);
+            scene.add(pointLight2);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            logos.forEach(logo => {
+                logo.rotation.x += logo.userData.rotationSpeedX;
+                logo.rotation.y += logo.userData.rotationSpeedY;
+                logo.rotation.z += logo.userData.rotationSpeedZ;
+            });
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+        
+        init();
+        animate();
+    </script>
+</body>
+</html>
